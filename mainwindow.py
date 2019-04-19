@@ -42,7 +42,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         validator = QtGui.QRegExpValidator(regx, self.port_input)
         self.port_input.setValidator(validator)
 
-        self.ip_input = QtWidgets.QPlainTextEdit(self.centralwidget)
+        self.ip_input = QtWidgets.QLineEdit(self.centralwidget)
         self.ip_input.setGeometry(QtCore.QRect(100, 100, 171, 31))
         self.ip_input.setObjectName("ip_input")
         self.label_3 = QtWidgets.QLabel(self.centralwidget)
@@ -51,9 +51,11 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.label_4 = QtWidgets.QLabel(self.centralwidget)
         self.label_4.setGeometry(QtCore.QRect(30, 110, 51, 16))
         self.label_4.setObjectName("label_4")
+
         self.connect_button = QtWidgets.QPushButton(self.centralwidget)
         self.connect_button.setGeometry(QtCore.QRect(30, 140, 190, 28))
         self.connect_button.setObjectName("connect_button")
+        self.connect_button.clicked.connect(self.join_server)
 
         self.create_button = QtWidgets.QPushButton(self.centralwidget)
         self.create_button.setGeometry(QtCore.QRect(240, 140, 191, 28))
@@ -74,13 +76,34 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.create_button.setText(_translate("MainWindow", "创建房间"))
 
     def create_server(self):
-        user_name = self.username_input.text()
         srv = server.Game_server()
         srv.start()
-        toserver_sck = socketlib.packed_client("127.0.0.1", srv.port)
-        toserver_sck.send_msg({"type":"request", "name":user_name})
-        if toserver_sck.recv_msg(["accpet"]):
-            self.hide()
-            self.new_ui = room.Ui_RoomWindow(toserver_sck)
-            self.new_ui.parent = self
-            self.new_ui.show()
+        self.connect_to_server("127.0.0.1", srv.port)
+    
+    def join_server(self):
+        ip_addr = self.ip_input.text()
+        port_str = self.port_input.text()
+        if not port_str.isalnum() or len(port_str) == 0:
+            QtWidgets.QMessageBox.warning(self, "错误", "端口错误", QtWidgets.QMessageBox.Yes)
+            return
+        port_num = int(port_str)
+        self.connect_to_server(ip_addr, port_num)
+    
+    def connect_to_server(self, ip_addr, port_num):
+        self.connect_button.setEnabled(False)
+        self.create_button.setEnabled(False)
+        try:
+            user_name = self.username_input.text()
+            toserver_sck = socketlib.packed_client(ip_addr, port_num, tout=10)
+            toserver_sck.send_msg({"type":"request", "name":user_name})
+            if toserver_sck.recv_msg(["accpet"]):
+                self.connect_button.setEnabled(True)
+                self.create_button.setEnabled(True)
+                self.hide()
+                self.new_ui = room.Ui_RoomWindow(toserver_sck)
+                self.new_ui.parent = self
+                self.new_ui.show()
+        except:
+            QtWidgets.QMessageBox.warning(self, "错误", "无法连接到服务器", QtWidgets.QMessageBox.Yes)
+            self.connect_button.setEnabled(True)
+            self.create_button.setEnabled(True)
