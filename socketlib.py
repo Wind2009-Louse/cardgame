@@ -1,5 +1,5 @@
 import socket
-import queue
+from multiprocessing import Queue
 import json
 import threading
 import struct
@@ -40,8 +40,7 @@ class packed_client():
         else:
             self.ssocket = sckt
         self.id = "%s:%d"%(ip, port)
-        self.send_queue = queue.Queue()
-        self.recv_queue = queue.Queue()
+        self.recv_queue = Queue()
         self.recv_thread = MR_thread(self)
         self.recv_thread.start()
     def send_msg(self, msg):
@@ -53,12 +52,17 @@ class packed_client():
         msg_header = struct.pack('i',msg_length)
         self.ssocket.send(msg_header)
         self.ssocket.send(msg_byte)
-    def recv_msg(self, fliter):
+    def recv_msg(self, fliter, b=True):
         while(True):
-            recv_data = self.recv_queue.get()
+            try:
+                recv_data = self.recv_queue.get(block=b)
+            except Exception as e:
+                return None
             if not recv_data:
                 return None
             if recv_data["type"] not in fliter:
                 self.recv_queue.put(recv_data)
+                if not b:
+                    return None
                 continue
             return recv_data

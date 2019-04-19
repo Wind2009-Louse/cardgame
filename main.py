@@ -3,7 +3,6 @@ import cardlib
 import randomlib
 import mainwindow
 import sys
-import server
 from PyQt5.QtWidgets import QApplication
 
 if __name__ == "__main__":

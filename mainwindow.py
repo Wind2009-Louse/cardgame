@@ -7,6 +7,9 @@
 # WARNING! All changes made in this file will be lost!
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+import server
+import room
+import socketlib
 
 class Ui_MainWindow(QtWidgets.QWidget):
     def __init__(self):
@@ -55,6 +58,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.create_button = QtWidgets.QPushButton(self.centralwidget)
         self.create_button.setGeometry(QtCore.QRect(240, 140, 191, 28))
         self.create_button.setObjectName("create_button")
+        self.create_button.clicked.connect(self.create_server)
 
         self.retranslateUi(self)
         QtCore.QMetaObject.connectSlotsByName(self)
@@ -68,3 +72,15 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.label_4.setText(_translate("MainWindow", "服务器"))
         self.connect_button.setText(_translate("MainWindow", "连接服务器"))
         self.create_button.setText(_translate("MainWindow", "创建房间"))
+
+    def create_server(self):
+        user_name = self.username_input.text()
+        srv = server.Game_server()
+        srv.start()
+        toserver_sck = socketlib.packed_client("127.0.0.1", srv.port)
+        toserver_sck.send_msg({"type":"request", "name":user_name})
+        if toserver_sck.recv_msg(["accpet"]):
+            self.hide()
+            self.new_ui = room.Ui_RoomWindow(toserver_sck)
+            self.new_ui.parent = self
+            self.new_ui.show()
