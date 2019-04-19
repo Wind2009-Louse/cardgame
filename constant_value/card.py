@@ -117,7 +117,7 @@ EFFECT_INFO = {
         "random_type":"Normalize"
     },
     ATTR_ATTACK_APPEND:{
-        "name":["-attr爆击",10],
+        "name":["-attr暴击",10],
         "desp":"对-target造成-value点-attr属性暴击。",
         "base_power":5,
         "default_target":TARGET_ENEMY,
